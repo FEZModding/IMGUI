@@ -7,15 +7,4 @@
    <Dependencies>
       <DependencyInfo Name="HAT" MinimumVersion="2.0"/>
    </Dependencies>
-   <NativeDependencies>
-      <NativeLibrary Architecture="X86" Platform="Windows">
-         bin\win-x86\cimgui.dll
-      </NativeLibrary>
-      <NativeLibrary Architecture="X64" Platform="Linux">
-         bin\linux-x64\libcimgui.so
-      </NativeLibrary>
-      <NativeLibrary Architecture="X64" Platform="OSX">
-         bin\osx\libcimgui.dylib
-      </NativeLibrary>
-   </NativeDependencies>
 </Metadata>

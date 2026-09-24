@@ -1,48 +1,41 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Library</OutputType>
-    <TargetFramework>netstandard2.0</TargetFramework>
-    <LangVersion>latest</LangVersion>
+    <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
-    <DebugType>full</DebugType>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
-    <DebugType>portable</DebugType>
-    <PathMap>$(MSBuildProjectDirectory)=/_/</PathMap>
+    <GenerateDependencyFile>true</GenerateDependencyFile>
+    <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+    <PathMap>$(MSBuildProjectDirectory)=IMGUI/</PathMap>
   </PropertyGroup>
 
-  <Import Project="$(ProjectDir)UserProperties.xml" />
+  <Import Project="$(ProjectDir)UserProperties.xml"/>
 
   <Target Name="VerifyModReferences" BeforeTargets="Build">
-    <Error Text="You forgot to edit/copy UserProperties.xml." Condition="$(UserPropertiesSetUp) != True" />
+    <Error Text="You forgot to edit/copy UserProperties.xml." Condition="$(UserPropertiesSetUp) != True"/>
   </Target>
 
   <Target Name="PrepareMod" AfterTargets="Build">
-    <MakeDir Condition="Exists('$(ModOutputDir)\..')" Directories="$(ModOutputDir)" />
     <PropertyGroup>
-      <ModCompileOutputDir Condition="Exists($(ModOutputDir))">$(ModOutputDir)\</ModCompileOutputDir>
-      <ModCompileOutputDir Condition="!Exists($(ModOutputDir))">$(ProjectDir)out\</ModCompileOutputDir>
+      <ModCompileOutputDir Condition="'$(ModOutputDir)' != ''">$(ModOutputDir)</ModCompileOutputDir>
+      <ModCompileOutputDir Condition="'$(ModOutputDir)' == ''">$(ProjectDir)out</ModCompileOutputDir>
     </PropertyGroup>
 
-    <Copy SourceFiles="$(TargetDir)$(TargetName).dll;$(TargetDir)$(TargetName).pdb" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(ProjectDir)Metadata.xml" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(ProjectDir)LICENSE" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\lib\netstandard2.0\ImGui.NET.dll" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)system.numerics.vectors\4.4.0\lib\netstandard2.0\System.Numerics.Vectors.dll" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)system.runtime.compilerservices.unsafe\4.4.0\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll" DestinationFolder="$(ModCompileOutputDir)\" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\linux-x64\native\libcimgui.so" DestinationFiles="$(ModCompileOutputDir)\bin\linux-x64\libcimgui.so" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\osx\native\libcimgui.dylib" DestinationFiles="$(ModCompileOutputDir)\bin\osx\libcimgui.dylib" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\win-x64\native\cimgui.dll" DestinationFiles="$(ModCompileOutputDir)\bin\win-x64\cimgui.dll" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\win-x86\native\cimgui.dll" DestinationFiles="$(ModCompileOutputDir)\bin\win-x86\cimgui.dll" Retries="0" />
-    <Copy SourceFiles="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\win-arm64\native\cimgui.dll" DestinationFiles="$(ModCompileOutputDir)\bin\win-arm64\cimgui.dll" Retries="0" />
+    <ItemGroup>
+      <ModFiles Include="$(TargetDir)$(TargetName).dll;$(TargetDir)$(TargetName).pdb;$(TargetDir)$(TargetName).deps.json;$(TargetDir)ImGui.NET.dll;$(ProjectDir)Metadata.xml;$(ProjectDir)LICENSE"/>
+      <NativeAssets Include="$(NuGetPackageRoot)imgui.net\1.90.9.1\runtimes\**\native\*"/>
+    </ItemGroup>
+    
+    <MakeDir Directories="$(ModCompileOutputDir)"/>
+    <Copy SourceFiles="@(ModFiles)" DestinationFolder="$(ModCompileOutputDir)"/>
+    <Copy SourceFiles="@(NativeAssets)" DestinationFolder="$(ModCompileOutputDir)\runtimes\%(RecursiveDir)"/>
   </Target>
-  
+
   <ItemGroup>
     <PackageReference Include="ImGui.NET" Version="1.90.9.1"/>
-    <PackageReference Include="System.Numerics.Vectors" Version="4.4.0" />
-    <PackageReference Include="System.Runtime.CompilerServices.Unsafe" Version="4.4.0" />
   </ItemGroup>
 
   <ItemGroup>
@@ -50,55 +43,42 @@
       <HintPath>$(FezDir)\Common.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="ContentSerialization">
       <HintPath>$(FezDir)\ContentSerialization.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="EasyStorage">
       <HintPath>$(FezDir)\EasyStorage.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="FEZ">
-      <HintPath>$(FezDir)\FEZ.exe</HintPath>
+      <HintPath>$(FezDir)\HAT.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="FezEngine">
       <HintPath>$(FezDir)\FezEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="FNA">
       <HintPath>$(FezDir)\FNA.dll</HintPath>
       <Private>False</Private>
     </Reference>
-   
     <Reference Include="XnaWordWrapCore">
       <HintPath>$(FezDir)\XnaWordWrapCore.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
-    <Reference Include="MonoMod">
-      <HintPath>$(MonoModDir)\MonoMod.exe</HintPath>
-      <Private>False</Private>
-    </Reference>
-    
     <Reference Include="MonoMod.RuntimeDetour">
       <HintPath>$(MonoModDir)\MonoMod.RuntimeDetour.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="MonoMod.Utils">
       <HintPath>$(MonoModDir)\MonoMod.Utils.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    
     <Reference Include="Mono.Cecil">
       <HintPath>$(MonoModDir)\Mono.Cecil.dll</HintPath>
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+
 </Project>
