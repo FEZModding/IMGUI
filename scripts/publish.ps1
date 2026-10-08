@@ -13,9 +13,9 @@ Remove-Item -LiteralPath $archive -Force -ErrorAction SilentlyContinue
 New-Item -ItemType Directory -Path $packageDir -Force | Out-Null
 
 try {
-    dotnet build (Join-Path $repositoryDir 'IMGUI.csproj') --configuration Release "-p:ModOutputDir=$packageDir"
+    dotnet publish (Join-Path $repositoryDir 'IMGUI.csproj') --configuration Release -p:ContinuousIntegrationBuild=true "-p:ModOutputDir=$packageDir"
     if ($LASTEXITCODE -ne 0) {
-        throw "dotnet build failed with exit code $LASTEXITCODE."
+        throw "dotnet publish failed with exit code $LASTEXITCODE."
     }
 
     Compress-Archive -Path (Join-Path $packageDir '*') -DestinationPath $archive

@@ -11,7 +11,7 @@ rm -rf "$package_dir"
 rm -f "$archive"
 mkdir -p "$package_dir"
 
-dotnet build "$repository_dir/IMGUI.csproj" --configuration Release -p:ModOutputDir="$package_dir"
+dotnet publish "$repository_dir/IMGUI.csproj" --configuration Release -p:ContinuousIntegrationBuild=true -p:ModOutputDir="$package_dir"
 
 (
   cd "$package_dir"
