@@ -50,6 +50,13 @@ public class IMGUI : DrawableGameComponent
 
     protected override void Dispose(bool disposing)
     {
+        if (disposing)
+        {
+            TargetRenderer.PreDraw -= PreDraw;
+            _imGuiRenderer?.Dispose();
+            _imGuiRenderer = null;
+        }
+
         RasterizerCombinerPatch.Dispose();
         base.Dispose(disposing);
     }

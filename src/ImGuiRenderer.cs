@@ -72,6 +72,8 @@ internal partial class ImGuiRenderer : IDisposable
         PopulateKeyMappings();
             
         TextInputEXT.TextInput += HandleInput;
+        InitializeTextInput();
+        InitializeInputCapture();
     }
 
     /// <summary>
@@ -125,9 +127,6 @@ internal partial class ImGuiRenderer : IDisposable
             {
                 io.AddKeyEvent(KeyMappings[key], keyboard.IsKeyDown(key));
             }
-
-            _inputManager.Enabled = !(io.WantCaptureMouse || io.WantCaptureKeyboard);
-            _game.IsMouseVisible = io.WantCaptureMouse;
         }
         #endregion
 
@@ -139,6 +138,9 @@ internal partial class ImGuiRenderer : IDisposable
         io.DisplayFramebufferScale = new System.Numerics.Vector2(1, 1);
 
         ImGui.NewFrame();
+        UpdateTextInput(_game.IsActive && io.WantTextInput);
+        _captureInput = io.WantCaptureMouse || io.WantCaptureKeyboard;
+        _game.IsMouseVisible = io.WantCaptureMouse;
     }
 
     /// <summary>
@@ -252,6 +254,11 @@ internal partial class ImGuiRenderer : IDisposable
     /// </summary>
     public void Dispose()
     {
+        _inputUpdateHook?.Dispose();
+        _inputUpdateHook = null;
+        TextInputEXT.TextInput -= HandleInput;
+        DisposeTextInput();
+
         if (_fontTexture != null)
         {
             UnbindTexture(_fontTexture);
