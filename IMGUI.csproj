@@ -9,7 +9,6 @@
     <AppendRuntimeIdentifierToOutputPath>false</AppendRuntimeIdentifierToOutputPath>
     <GenerateDependencyFile>true</GenerateDependencyFile>
     <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-    <PathMap>$(MSBuildProjectDirectory)=IMGUI/</PathMap>
   </PropertyGroup>
 
   <Import Project="$(MSBuildThisFileDirectory)UserProperties.xml"
