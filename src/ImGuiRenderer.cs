@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Reflection;
 using FezEngine.Components;
 using FezEngine.Effects;
 using FezEngine.Structure;
@@ -9,6 +10,7 @@ using IMGUI.Patches;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoMod.RuntimeDetour;
 
 namespace ImGuiNET;
 
@@ -31,6 +33,13 @@ internal partial class ImGuiRenderer : IDisposable
 
     private float _previousScrollWheelValue;
 
+    private Hook _drawHook;
+
+    private bool _frameStarted;
+
+    // ReSharper disable once InconsistentNaming
+    private delegate void orig_Draw(Game self, GameTime gameTime);
+
     private const float FallbackFrameTime = 1f / 60f;
 
     private const float WheelDelta = 120f;
@@ -40,6 +49,7 @@ internal partial class ImGuiRenderer : IDisposable
         var renderer = new ImGuiRenderer(game);
         renderer.Initialize();
         renderer.RebuildFontAtlas();
+        renderer.InitializeDrawHook();
         return renderer;
     }
 
@@ -76,6 +86,39 @@ internal partial class ImGuiRenderer : IDisposable
         InitializeInputCapture();
     }
 
+    private void InitializeDrawHook()
+    {
+        const BindingFlags bindingFlags = BindingFlags.Instance | BindingFlags.NonPublic;
+        var drawMethod = typeof(Game).GetMethod("Draw", bindingFlags,
+                             null, [typeof(GameTime)], null)
+                         ?? throw new InvalidOperationException("Could not find Draw method on Game");
+
+        // FEZ skips TargetRenderer.PreDraw during loading, but still draws components
+        _drawHook = new Hook(drawMethod, (orig_Draw orig, Game self, GameTime gameTime) =>
+        {
+            if (self != _game)
+            {
+                orig(self, gameTime);
+                return;
+            }
+
+            try
+            {
+                BeforeLayout(gameTime);
+                orig(self, gameTime);
+            }
+            finally
+            {
+                // A hidden or removed IMGUI component may not render this frame
+                if (_frameStarted)
+                {
+                    _frameStarted = false;
+                    ImGui.EndFrame();
+                }
+            }
+        });
+    }
+
     /// <summary>
     /// Rebuilds the font atlas by extracting texture data from ImGui and creating a GPU texture.
     /// </summary>
@@ -104,7 +147,7 @@ internal partial class ImGuiRenderer : IDisposable
     /// Call this before rendering ImGui UI.
     /// </remarks>
     /// <param name="gameTime">Current game timing information.</param>
-    public void BeforeLayout(GameTime gameTime)
+    private void BeforeLayout(GameTime gameTime)
     {
         var io = ImGui.GetIO();
         var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -138,6 +181,7 @@ internal partial class ImGuiRenderer : IDisposable
         io.DisplayFramebufferScale = new System.Numerics.Vector2(1, 1);
 
         ImGui.NewFrame();
+        _frameStarted = true;
         UpdateTextInput(_game.IsActive && io.WantTextInput);
         _captureInput = io.WantCaptureMouse || io.WantCaptureKeyboard;
         _game.IsMouseVisible = io.WantCaptureMouse;
@@ -148,7 +192,13 @@ internal partial class ImGuiRenderer : IDisposable
     /// </summary>
     public unsafe void AfterLayout()
     {
+        if (!_frameStarted)
+        {
+            return;
+        }
+
         ImGui.Render();
+        _frameStarted = false;
         CleanupDeadTextures();
 
         var io = ImGui.GetIO();
@@ -254,6 +304,8 @@ internal partial class ImGuiRenderer : IDisposable
     /// </summary>
     public void Dispose()
     {
+        _drawHook?.Dispose();
+        _drawHook = null;
         _inputUpdateHook?.Dispose();
         _inputUpdateHook = null;
         TextInputEXT.TextInput -= HandleInput;

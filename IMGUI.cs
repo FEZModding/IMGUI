@@ -25,13 +25,7 @@ public class IMGUI : DrawableGameComponent
         {
             RasterizerCombinerPatch.Apply();
             _imGuiRenderer = ImGuiRenderer.Create(Game);
-            TargetRenderer.PreDraw += PreDraw;
         });
-    }
-
-    private void PreDraw(GameTime gameTime)
-    {
-        _imGuiRenderer?.BeforeLayout(gameTime);
     }
 
     public override void Draw(GameTime gameTime)
@@ -52,7 +46,6 @@ public class IMGUI : DrawableGameComponent
     {
         if (disposing)
         {
-            TargetRenderer.PreDraw -= PreDraw;
             _imGuiRenderer?.Dispose();
             _imGuiRenderer = null;
         }
