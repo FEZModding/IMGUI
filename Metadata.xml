@@ -2,7 +2,7 @@
    <Name>IMGUI</Name>
    <Description>Mod for integrating the ImGui.NET wrapper of Dear ImGui</Description>
    <Author>zerocker</Author>
-   <Version>1.90.9.3</Version>
+   <Version>1.90.9.4</Version>
    <LibraryName>IMGUI.dll</LibraryName>
    <Dependencies>
       <DependencyInfo Name="HAT" MinimumVersion="3.0"/>
