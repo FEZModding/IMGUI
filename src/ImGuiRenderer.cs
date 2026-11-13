@@ -160,6 +160,7 @@ internal partial class ImGuiRenderer : IDisposable
         #region Update inputs
         {
             var mouse = Mouse.GetState();
+            HorizontalScrollHack.hadGameTick = true;
             io.AddMousePosEvent(mouse.X, mouse.Y);
             if(hasFocus)
             {
@@ -168,7 +169,7 @@ internal partial class ImGuiRenderer : IDisposable
                 io.AddMouseButtonEvent(2, mouse.MiddleButton == ButtonState.Pressed);
                 io.AddMouseButtonEvent(3, mouse.XButton1 == ButtonState.Pressed);
                 io.AddMouseButtonEvent(4, mouse.XButton2 == ButtonState.Pressed);
-                io.AddMouseWheelEvent(0, (mouse.ScrollWheelValue - _previousScrollWheelValue) / WheelDelta);
+                io.AddMouseWheelEvent(HorizontalScrollHack.wheel_x, (mouse.ScrollWheelValue - _previousScrollWheelValue) / WheelDelta);
             }
             else if (_wasFocused)
             {
