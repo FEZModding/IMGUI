@@ -37,6 +37,8 @@ internal partial class ImGuiRenderer : IDisposable
 
     private bool _frameStarted;
 
+    private bool _wasFocused;
+
     // ReSharper disable once InconsistentNaming
     private delegate void orig_Draw(Game self, GameTime gameTime);
 
@@ -153,17 +155,30 @@ internal partial class ImGuiRenderer : IDisposable
         var delta = (float)gameTime.ElapsedGameTime.TotalSeconds;
         io.DeltaTime = delta > 0f ? delta : FallbackFrameTime;
 
+        bool hasFocus = _game.IsActive;
+
         #region Update inputs
         {
             var mouse = Mouse.GetState();
             io.AddMousePosEvent(mouse.X, mouse.Y);
-            io.AddMouseButtonEvent(0, mouse.LeftButton == ButtonState.Pressed);
-            io.AddMouseButtonEvent(1, mouse.RightButton == ButtonState.Pressed);
-            io.AddMouseButtonEvent(2, mouse.MiddleButton == ButtonState.Pressed);
-            io.AddMouseButtonEvent(3, mouse.XButton1 == ButtonState.Pressed);
-            io.AddMouseButtonEvent(4, mouse.XButton2 == ButtonState.Pressed);
-            io.AddMouseWheelEvent(0, (mouse.ScrollWheelValue - _previousScrollWheelValue) / WheelDelta);
+            if(hasFocus)
+            {
+                io.AddMouseButtonEvent(0, mouse.LeftButton == ButtonState.Pressed);
+                io.AddMouseButtonEvent(1, mouse.RightButton == ButtonState.Pressed);
+                io.AddMouseButtonEvent(2, mouse.MiddleButton == ButtonState.Pressed);
+                io.AddMouseButtonEvent(3, mouse.XButton1 == ButtonState.Pressed);
+                io.AddMouseButtonEvent(4, mouse.XButton2 == ButtonState.Pressed);
+                io.AddMouseWheelEvent(0, (mouse.ScrollWheelValue - _previousScrollWheelValue) / WheelDelta);
+            }
+            else if (_wasFocused)
+            {
+                for(int i=0; i<5; ++i)
+                {
+                    io.AddMouseButtonEvent(i, false);
+                }
+            }
             _previousScrollWheelValue = mouse.ScrollWheelValue;
+            _wasFocused = hasFocus;
 
             var keyboard = Keyboard.GetState();
             foreach (Keys key in KeyMappings.Keys)
@@ -182,7 +197,7 @@ internal partial class ImGuiRenderer : IDisposable
 
         ImGui.NewFrame();
         _frameStarted = true;
-        UpdateTextInput(_game.IsActive && io.WantTextInput);
+        UpdateTextInput(hasFocus && io.WantTextInput);
         _captureInput = io.WantCaptureMouse || io.WantCaptureKeyboard;
         _game.IsMouseVisible = io.WantCaptureMouse;
     }
